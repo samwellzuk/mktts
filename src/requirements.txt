@@ -1,0 +1,4 @@
+requests
+Scrapy
+gTTS
+PySide2
