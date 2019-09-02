@@ -20,5 +20,16 @@ class MainWindow(QMainWindow):
         self.ui.qwebView.setSizePolicy(sizePolicy)
         self.ui.qwebView.setObjectName("qwebView")
         self.ui.verticalLayout_4.addWidget(self.ui.qwebView)
+        #self.ui.qwebView.loadStarted.connect()
+        #self.ui.qwebView.loadProgress.connect()
+        #self.ui.qwebView.loadFinished.connect()
         self.ui.qwebView.load(QUrl('https://dictionary.cambridge.org/dictionary/'))
+        self.get_html()
+
+    def store_html(self, data):
+        print(data)
+
+    def get_html(self):
+        current_page = self.ui.qwebView.page()
+
 
