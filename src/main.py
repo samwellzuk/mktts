@@ -1,4 +1,6 @@
-# This Python file uses the following encoding: utf-8
+# -*-coding: utf-8 -*-
+# Created by samwell
+
 import sys
 from PySide2.QtWidgets import QApplication
 from view.mainwindow import MainWindow

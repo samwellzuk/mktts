@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>images/app.png</file>
+    <file>images/cancel.png</file>
+    <file>images/play.png</file>
+</qresource>
+</RCC>
