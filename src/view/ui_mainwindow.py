@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainwindow.ui',
-# licensing of 'mainwindow.ui' applies.
+# Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created: Tue Sep  3 01:24:33 2019
-#      by: pyside2-uic  running on PySide2 5.13.0
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
-from PySide2 import QtCore, QtGui, QtWidgets
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1006, 756)
+        MainWindow.resize(1400, 738)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(":/images/app.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -116,12 +116,12 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtWidgets.QApplication.translate("MainWindow", "Voice Dictionary", None, -1))
-        self.groupBox_3.setTitle(QtWidgets.QApplication.translate("MainWindow", "Dictionary", None, -1))
-        self.groupBox_4.setTitle(QtWidgets.QApplication.translate("MainWindow", "Voice", None, -1))
-        self.autoplayBox.setText(QtWidgets.QApplication.translate("MainWindow", "Auto play voice", None, -1))
-        self.groupBox_2.setTitle(QtWidgets.QApplication.translate("MainWindow", "Title", None, -1))
-        self.groupBox.setTitle(QtWidgets.QApplication.translate("MainWindow", "Content", None, -1))
-        self.actionQuit.setText(QtWidgets.QApplication.translate("MainWindow", "Quit", None, -1))
-
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "Voice Dictionary"))
+        self.groupBox_3.setTitle(_translate("MainWindow", "Dictionary"))
+        self.groupBox_4.setTitle(_translate("MainWindow", "Voice"))
+        self.autoplayBox.setText(_translate("MainWindow", "Auto play voice"))
+        self.groupBox_2.setTitle(_translate("MainWindow", "Title"))
+        self.groupBox.setTitle(_translate("MainWindow", "Content"))
+        self.actionQuit.setText(_translate("MainWindow", "Quit"))
 import resouce_rc
