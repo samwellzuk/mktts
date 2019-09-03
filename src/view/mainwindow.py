@@ -1,5 +1,6 @@
 # -*-coding: utf-8 -*-
 # Created by samwell
+import threading
 
 from PyQt5.QtCore import QUrl, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QSizePolicy, QProgressDialog
@@ -20,26 +21,33 @@ class MainWindow(QMainWindow):
         self.ui.qwebView.setSizePolicy(sizePolicy)
         self.ui.qwebView.setObjectName("qwebView")
         self.ui.verticalLayout_4.addWidget(self.ui.qwebView)
+
         self.ui.qwebView.loadStarted.connect(self._started)
         self.ui.qwebView.loadProgress.connect(self._progress)
         self.ui.qwebView.loadFinished.connect(self._finished)
         self.progressDlg = QProgressDialog(self)
         self.progressDlg.setLabelText('Loading...')
         self.progressDlg.setCancelButtonText(None)
+        self.progressDlg.setAutoReset(False)
+        self.progressDlg.setAutoClose(False)
         self.ui.qwebView.load(QUrl('https://dictionary.cambridge.org/dictionary/'))
+        print(threading.get_ident())
 
     def _started(self):
         self.progressDlg.show()
+        print(threading.get_ident())
 
     @pyqtSlot(int)
     def _progress(self, progress):
         self.progressDlg.setValue(progress)
+        print(threading.get_ident())
 
     @pyqtSlot(bool)
     def _finished(self, bok):
         currenpage = self.ui.qwebView.page()
         currenpage.toHtml(self._to_html)
+        print(threading.get_ident())
 
     def _to_html(self, data):
-        print(data)
-        self.progressDlg.close()
+        #self.progressDlg.close()
+        print(threading.get_ident())

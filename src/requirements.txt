@@ -1,4 +1,6 @@
 requests
 Scrapy
 gTTS
-PySide2
+PyQt5
+PyQtWebEngine
+
