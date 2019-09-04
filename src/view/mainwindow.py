@@ -1,7 +1,7 @@
 # -*-coding: utf-8 -*-
 # Created by samwell
 import time
-
+from functools import partial
 
 from PyQt5.QtCore import Qt, QUrl, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QSizePolicy, QProgressDialog
@@ -34,32 +34,43 @@ class MainWindow(QMainWindow):
     @pyqtSlot(bool)
     def _finished(self, bok):
         if bok:
-            currenpage = self.qwebView.page()
-            currenpage.toHtml(self.process)
+            curpg = self.qwebView.page()
+            spath = str(curpg.url().path())
+            if not spath.endswith('/'):
+                curpg.toHtml(self._to_html)
+
+    def _to_html(self, data):
+        spath = str(self.qwebView.page().url().path())
+        qword = spath.split('/')[-1]
+        self.process(qword, data)
 
     @coroutine
-    def process(self, html):
+    def process(self, qword, html):
         def _worker(inval):
-            print("in worker, received '%s'" % inval)
+            print(inval)
             time.sleep(2)
-            return "%s worked" % inval
+            return inval
 
         self.ui.groupBox_5.setVisible(True)
+
+        sinfo = '%s, parsing ...' % qword
         self.ui.progressBar.setValue(0)
-        self.ui.progressLabel.setText('Starting task1 ...')
-        out = AsyncTask(_worker, "test string")
+        self.ui.progressLabel.setText(sinfo)
+        out = AsyncTask(_worker, sinfo)
         val = yield out
 
+        sinfo = '%s, query ...' % qword
         self.ui.progressBar.setValue(30)
-        self.ui.progressLabel.setText('Starting task2 ...')
-        out2 = AsyncTask(_worker, "another test string")
+        self.ui.progressLabel.setText(sinfo)
+        out2 = AsyncTask(_worker, sinfo)
         val2 = yield out2
 
+        sinfo = '%s, trans to voice ...' % qword
         self.ui.progressBar.setValue(60)
-        self.ui.progressLabel.setText('Starting task3 ...')
+        self.ui.progressLabel.setText(sinfo)
 
-        out = yield AsyncTask(_worker, "Some other string")
+        out = yield AsyncTask(_worker, sinfo)
         self.ui.progressBar.setValue(100)
-        self.ui.progressLabel.setText('Finished!')
+        self.ui.progressLabel.setText('%s, finished!' % qword)
         self.ui.groupBox_5.setVisible(False)
         return

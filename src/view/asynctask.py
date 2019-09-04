@@ -187,8 +187,7 @@ class AsyncTask(QObject):
         self.finished = True
         self.result = result
         if self.finished_callback:
-            func = partial(self.finished_callback, result)
-            QTimer.singleShot(0, func)
+            QTimer.singleShot(0, partial(self.finished_callback, result))
         self.objThread.quit()
         self.objThread.wait()
 
@@ -236,28 +235,26 @@ def coroutine(func=None, *, is_block=False):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        def execute(gen, input=None):
+        def execute(gen, data=None):
             nonlocal execute_finished
             try:
                 if isinstance(gen, types.GeneratorType):
-                    if not input:
+                    if not data:
                         obj = next(gen)
                     else:
                         try:
-                            obj = gen.send(input)
+                            obj = gen.send(data)
                         except StopIteration as e:
-                            result = getattr(e, "value", None)
-                            return result
+                            return getattr(e, "value", None)
                     if isinstance(obj, AsyncTask):
                         # Tell the thread to call `execute` when its done
                         # using the current generator object.
-                        func = partial(execute, gen)
-                        obj.finished_callback = func
+                        obj.finished_callback = partial(execute, gen)
                         obj.start()
                     else:
                         raise Exception("Using yield is only supported with AsyncTasks.")
                 else:
-                    return input
+                    return data
             finally:
                 execute_finished = True
 
