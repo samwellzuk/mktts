@@ -1,11 +1,13 @@
 # -*-coding: utf-8 -*-
 # Created by samwell
-import threading
+import time
 
-from PyQt5.QtCore import QUrl, pyqtSlot
+
+from PyQt5.QtCore import Qt, QUrl, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QSizePolicy, QProgressDialog
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from .ui_mainwindow import Ui_MainWindow
+from .asynctask import coroutine, AsyncTask
 
 
 class MainWindow(QMainWindow):
@@ -13,41 +15,51 @@ class MainWindow(QMainWindow):
         QMainWindow.__init__(self)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.qwebView = QWebEngineView(self.ui.groupBox_3)
+        # chrome init
+        self.qwebView = QWebEngineView(self.ui.groupBox_3)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.ui.qwebView.sizePolicy().hasHeightForWidth())
-        self.ui.qwebView.setSizePolicy(sizePolicy)
-        self.ui.qwebView.setObjectName("qwebView")
-        self.ui.verticalLayout_4.addWidget(self.ui.qwebView)
+        sizePolicy.setHeightForWidth(self.qwebView.sizePolicy().hasHeightForWidth())
+        self.qwebView.setSizePolicy(sizePolicy)
+        self.qwebView.setObjectName("qwebView")
+        self.ui.verticalLayout_4.addWidget(self.qwebView)
 
-        self.ui.qwebView.loadStarted.connect(self._started)
-        self.ui.qwebView.loadProgress.connect(self._progress)
-        self.ui.qwebView.loadFinished.connect(self._finished)
-        self.progressDlg = QProgressDialog(self)
-        self.progressDlg.setLabelText('Loading...')
-        self.progressDlg.setCancelButtonText(None)
-        self.progressDlg.setAutoReset(False)
-        self.progressDlg.setAutoClose(False)
-        self.ui.qwebView.load(QUrl('https://dictionary.cambridge.org/dictionary/'))
-        print(threading.get_ident())
-
-    def _started(self):
-        self.progressDlg.show()
-        print(threading.get_ident())
-
-    @pyqtSlot(int)
-    def _progress(self, progress):
-        self.progressDlg.setValue(progress)
-        print(threading.get_ident())
+        # hide
+        self.ui.groupBox_5.setVisible(False)
+        # connection
+        self.qwebView.loadFinished.connect(self._finished)
+        self.qwebView.load(QUrl('https://dictionary.cambridge.org/dictionary/'))
 
     @pyqtSlot(bool)
     def _finished(self, bok):
-        currenpage = self.ui.qwebView.page()
-        currenpage.toHtml(self._to_html)
-        print(threading.get_ident())
+        if bok:
+            currenpage = self.qwebView.page()
+            currenpage.toHtml(self.process)
 
-    def _to_html(self, data):
-        #self.progressDlg.close()
-        print(threading.get_ident())
+    @coroutine
+    def process(self, html):
+        def _worker(inval):
+            print("in worker, received '%s'" % inval)
+            time.sleep(2)
+            return "%s worked" % inval
+
+        self.ui.groupBox_5.setVisible(True)
+        self.ui.progressBar.setValue(0)
+        self.ui.progressLabel.setText('Starting task1 ...')
+        out = AsyncTask(_worker, "test string")
+        val = yield out
+
+        self.ui.progressBar.setValue(30)
+        self.ui.progressLabel.setText('Starting task2 ...')
+        out2 = AsyncTask(_worker, "another test string")
+        val2 = yield out2
+
+        self.ui.progressBar.setValue(60)
+        self.ui.progressLabel.setText('Starting task3 ...')
+
+        out = yield AsyncTask(_worker, "Some other string")
+        self.ui.progressBar.setValue(100)
+        self.ui.progressLabel.setText('Finished!')
+        self.ui.groupBox_5.setVisible(False)
+        return
