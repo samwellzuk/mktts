@@ -6,6 +6,10 @@ from functools import partial
 from PyQt5.QtCore import Qt, QUrl, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QSizePolicy, QProgressDialog
 from PyQt5.QtWebEngineWidgets import QWebEngineView
+
+from di.cambridge import Cambridge
+from di.collins import Collins
+
 from .ui_mainwindow import Ui_MainWindow
 from .asynctask import coroutine, AsyncTask
 
@@ -29,11 +33,23 @@ class MainWindow(QMainWindow):
         self.ui.groupBox_5.setVisible(False)
         self.ui.groupBox_7.setVisible(False)
 
+        # init dictionary
+        self.dictionaries = [Cambridge(), Collins()]
+        for obj in self.dictionaries:
+            self.ui.dictionaryBox.addItem(obj.name)
+        self.ui.dictionaryBox.currentIndexChanged.connect(self._dictionary_change)
+
         # connection
         self.qwebView.loadStarted.connect(self._load_started)
         self.qwebView.loadProgress.connect(self._load_progress)
         self.qwebView.loadFinished.connect(self._load_finished)
-        self.qwebView.load(QUrl('https://dictionary.cambridge.org/dictionary/'))
+
+        self.ui.dictionaryBox.setCurrentIndex(0)
+        self.qwebView.load(QUrl(self.dictionaries[0].home))
+
+    @pyqtSlot(int)
+    def _dictionary_change(self, index):
+        self.qwebView.load(QUrl(self.dictionaries[index].home))
 
     @pyqtSlot()
     def _load_started(self):
@@ -47,16 +63,12 @@ class MainWindow(QMainWindow):
     def _load_finished(self, bok):
         self.ui.groupBox_7.setVisible(False)
         if bok:
-            curpg = self.qwebView.page()
-            print(curpg.url())
-            spath = str(curpg.url().path())
-            if not spath.endswith('/') and not spath.endswith('.html'):
-                curpg.toHtml(self._to_html)
-
-    def _to_html(self, data):
-        spath = str(self.qwebView.page().url().path())
-        qword = spath.split('/')[-1]
-        self.process(qword, data)
+            url = self.qwebView.page().url()
+            for diobj in self.dictionaries:
+                if diobj.check_url(url):
+                    func = partial(self.process, diobj, url)
+                    self.qwebView.page().toHtml(func)
+                    break
 
     def _query_start(self):
         self.ui.autoplayBox.setEnabled(False)
@@ -86,11 +98,12 @@ class MainWindow(QMainWindow):
         self.ui.contentStop.setEnabled(True)
 
     @coroutine
-    def process(self, qword, html):
+    def process(self, diobj, url, html):
         def _worker(inval):
             print(inval)
             time.sleep(2)
 
+        qword = 'test'
         self._query_start()
 
         sinfo = '%s, parsing ...' % qword
