@@ -234,40 +234,41 @@ def coroutine(func=None, *, is_block=False):
         return partial(coroutine, is_block=is_block)
 
     @wraps(func)
-    def wrapper(*args, **kwargs):
-        def execute(gen, data=None):
-            nonlocal execute_finished
-            try:
-                if isinstance(gen, types.GeneratorType):
-                    if not data:
-                        obj = next(gen)
-                    else:
-                        try:
-                            obj = gen.send(data)
-                        except StopIteration as e:
-                            return getattr(e, "value", None)
-                    if isinstance(obj, AsyncTask):
-                        # Tell the thread to call `execute` when its done
-                        # using the current generator object.
-                        obj.finished_callback = partial(execute, gen)
-                        obj.start()
-                    else:
-                        raise Exception("Using yield is only supported with AsyncTasks.")
-                else:
-                    return data
-            finally:
-                execute_finished = True
+    def _wrapper(*args, **kwargs):
+        def _execute(gen, data):
+            nonlocal genobj_finished
+            if not isinstance(gen, types.GeneratorType):
+                genobj_finished = True
+                return data
 
-        result = func(*args, **kwargs)
-        execute(result)
-        execute_finished = False
+            if data == id(gen):
+                obj = next(gen)
+            else:
+                try:
+                    obj = gen.send(data)
+                except StopIteration as e:
+                    genobj_finished = True
+                    return getattr(e, "value", None)
+            if isinstance(obj, AsyncTask):
+                # Tell the thread to call `execute` when its done
+                # using the current generator object.
+                obj.finished_callback = partial(_execute, gen)
+                obj.start()
+            else:
+                genobj_finished = True
+                raise Exception("Using yield is only supported with AsyncTasks.")
+
+        genobj_finished = False
+
+        genobj = func(*args, **kwargs)
+        genrt = _execute(genobj, id(genobj))
         if is_block:
             while True:
                 QApplication.processEvents()
-                if execute_finished:
+                if genobj_finished:
                     break
                 time.sleep(0.1)
-
-    return wrapper
+        return genrt
+    return _wrapper
 
 # End coroutine-framework code
