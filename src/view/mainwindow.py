@@ -35,7 +35,6 @@ class MainWindow(QMainWindow):
         self.qwebView.loadFinished.connect(self._load_finished)
         self.qwebView.load(QUrl('https://dictionary.cambridge.org/dictionary/'))
 
-
     @pyqtSlot()
     def _load_started(self):
         self.ui.groupBox_7.setVisible(True)
@@ -51,7 +50,7 @@ class MainWindow(QMainWindow):
             curpg = self.qwebView.page()
             print(curpg.url())
             spath = str(curpg.url().path())
-            if not spath.endswith('/'):
+            if not spath.endswith('/') and not spath.endswith('.html'):
                 curpg.toHtml(self._to_html)
 
     def _to_html(self, data):
@@ -59,33 +58,54 @@ class MainWindow(QMainWindow):
         qword = spath.split('/')[-1]
         self.process(qword, data)
 
+    def _query_start(self):
+        self.ui.autoplayBox.setEnabled(False)
+        self.ui.titleEdit.setEnabled(False)
+        self.ui.titlePlay.setEnabled(False)
+        self.ui.titleStop.setEnabled(False)
+        self.ui.contentEdit.setEnabled(False)
+        self.ui.contentPlay.setEnabled(False)
+        self.ui.contentStop.setEnabled(False)
+
+        self.ui.groupBox_5.setVisible(True)
+        self.ui.progressBar.setValue(0)
+        self.ui.progressLabel.setText('')
+
+    def _query_progress(self, val, info):
+        self.ui.progressBar.setValue(val)
+        self.ui.progressLabel.setText(info)
+
+    def _query_finsh(self):
+        self.ui.groupBox_5.setVisible(False)
+        self.ui.autoplayBox.setEnabled(True)
+        self.ui.titleEdit.setEnabled(True)
+        self.ui.titlePlay.setEnabled(True)
+        self.ui.titleStop.setEnabled(True)
+        self.ui.contentEdit.setEnabled(True)
+        self.ui.contentPlay.setEnabled(True)
+        self.ui.contentStop.setEnabled(True)
+
     @coroutine
     def process(self, qword, html):
         def _worker(inval):
             print(inval)
             time.sleep(2)
 
-        self.ui.groupBox_5.setVisible(True)
+        self._query_start()
 
         sinfo = '%s, parsing ...' % qword
-        self.ui.progressBar.setValue(0)
-        self.ui.progressLabel.setText(sinfo)
-        out = AsyncTask(_worker, sinfo)
-        yield out
+        self._query_progress(0, sinfo)
+        yield AsyncTask(_worker, sinfo)
 
         sinfo = '%s, query ...' % qword
-        self.ui.progressBar.setValue(30)
-        self.ui.progressLabel.setText(sinfo)
-        out2 = AsyncTask(_worker, sinfo)
-        yield out2
+        self._query_progress(30, sinfo)
+        yield AsyncTask(_worker, sinfo)
 
         sinfo = '%s, trans to voice ...' % qword
-        self.ui.progressBar.setValue(60)
-        self.ui.progressLabel.setText(sinfo)
+        self._query_progress(60, sinfo)
 
         yield AsyncTask(_worker, sinfo)
-        self.ui.progressBar.setValue(100)
-        self.ui.progressLabel.setText('%s, finished!' % qword)
-        self.ui.groupBox_5.setVisible(False)
-        return
+        self._query_progress(100, '%s, finished!' % qword)
 
+        self._query_finsh()
+        return
