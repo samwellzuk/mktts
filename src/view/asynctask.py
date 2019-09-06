@@ -158,6 +158,14 @@ class AsyncTask(QObject):
     `on_finished` is called when the thread is complete.
 
     """
+    _out_counter = 0
+
+    @staticmethod
+    def check_thread():
+        while AsyncTask._out_counter != 0:
+            QApplication.processEvents()
+            time.sleep(0.1)
+        return
 
     def __init__(self, func, *args, **kwargs):
         super(AsyncTask, self).__init__()
@@ -172,6 +180,8 @@ class AsyncTask(QObject):
 
     def start(self):
         self.objThread.start()
+        # 线程创建成功后调用，不会与on_finished冲突，因为两者都是在主线程被调用
+        AsyncTask._out_counter += 1
 
     def customEvent(self, event):
         event.callback()
@@ -190,6 +200,7 @@ class AsyncTask(QObject):
             QTimer.singleShot(0, partial(self.finished_callback, result))
         self.objThread.quit()
         self.objThread.wait()
+        AsyncTask._out_counter -= 1
 
 
 class RunThreadCallback(QThread):
@@ -237,38 +248,42 @@ def coroutine(func=None, *, is_block=False):
     def _wrapper(*args, **kwargs):
         def _execute(gen, data):
             nonlocal genobj_finished
-            if not isinstance(gen, types.GeneratorType):
+            try:
+                if data == id(gen):
+                    obj = next(gen)
+                else:
+                    try:
+                        obj = gen.send(data)
+                    except StopIteration as e:
+                        genobj_finished = True
+                        AsyncTask._out_counter -= 1
+                        return getattr(e, "value", None)
+                if isinstance(obj, AsyncTask):
+                    # Tell the thread to call `execute` when its done
+                    # using the current generator object.
+                    obj.finished_callback = partial(_execute, gen)
+                    obj.start()
+                else:
+                    raise Exception("Using yield is only supported with AsyncTasks.")
+            except Exception:
                 genobj_finished = True
-                return data
-
-            if data == id(gen):
-                obj = next(gen)
-            else:
-                try:
-                    obj = gen.send(data)
-                except StopIteration as e:
-                    genobj_finished = True
-                    return getattr(e, "value", None)
-            if isinstance(obj, AsyncTask):
-                # Tell the thread to call `execute` when its done
-                # using the current generator object.
-                obj.finished_callback = partial(_execute, gen)
-                obj.start()
-            else:
-                genobj_finished = True
-                raise Exception("Using yield is only supported with AsyncTasks.")
-
-        genobj_finished = False
+                AsyncTask._out_counter -= 1
+                raise
 
         genobj = func(*args, **kwargs)
+        if not isinstance(genobj, types.GeneratorType):
+            return genobj
+
+        # lock counter
+        AsyncTask._out_counter += 1
+        genobj_finished = False
         genrt = _execute(genobj, id(genobj))
         if is_block:
-            while True:
+            while not genobj_finished:
                 QApplication.processEvents()
-                if genobj_finished:
-                    break
                 time.sleep(0.1)
         return genrt
+
     return _wrapper
 
 # End coroutine-framework code
