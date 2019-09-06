@@ -33,7 +33,6 @@ class Ui_MainWindow_Ex(Ui_MainWindow):
         self.verticalLayout_5.insertWidget(0, self.tabBar)
 
 
-
 class MainWindow(QMainWindow):
     def __init__(self):
         QMainWindow.__init__(self)
@@ -90,17 +89,18 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def _load_finished(self, bok):
+        if bok:
+            url = self.ui.qwebView.page().url()
+            index = self.ui.dictBox.currentIndex()
+            diobj = self.dictionaries[index]
+            if diobj.check_url(url):
+                accent = self.ui.accentBox.currentData()
+                func = partial(self.process, diobj, accent, url)
+                self.ui.qwebView.page().toHtml(func)
         self.ui.groupBox_7.setVisible(False)
         self.ui.dictBox.setEnabled(True)
         self.ui.accentBox.setEnabled(True)
         self.ui.dictMktts.setEnabled(True)
-        if bok:
-            url = self.ui.qwebView.page().url()
-            for diobj in self.dictionaries:
-                if diobj.check_url(url):
-                    func = partial(self.process, diobj, url)
-                    self.ui.qwebView.page().toHtml(func)
-                    break
 
     def _query_start(self):
         self.ui.tabBar.setEnabled(False)
@@ -142,7 +142,7 @@ class MainWindow(QMainWindow):
         AsyncTask.check_thread()
 
     @coroutine
-    def process(self, diobj, url, html):
+    def process(self, diobj, accent, url, html):
         def _worker(inval):
             print(inval)
             time.sleep(2)
