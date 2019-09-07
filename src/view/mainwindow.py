@@ -30,7 +30,7 @@ class Ui_MainWindow_Ex(Ui_MainWindow):
         # tabbar init
         self.tabBar = QTabBar(self.groupBox_6)
         self.tabBar.setObjectName("tabBar")
-        self.verticalLayout_5.insertWidget(0, self.tabBar)
+        self.verticalLayout_5.insertWidget(1, self.tabBar)
 
 
 class MainWindow(QMainWindow):
