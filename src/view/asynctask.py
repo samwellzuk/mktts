@@ -4,7 +4,9 @@ import weakref
 from functools import partial, wraps
 
 from PyQt5.QtCore import QThread, QTimer, QEvent, QObject
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
+
+from .utility import _get_parent_wnd
 
 
 # The following code is borrowed from here:
@@ -180,7 +182,7 @@ class AsyncTask(QObject):
 
     def start(self):
         self.objThread.start()
-        # 线程创建成功后调用，不会与on_finished冲突，因为两者都是在主线程被调用
+        # called after thread created, no conflict with on_finished, because they all be called in UI thread
         AsyncTask._out_counter += 1
 
     def customEvent(self, event):
@@ -265,10 +267,11 @@ def coroutine(func=None, *, is_block=False):
                     obj.start()
                 else:
                     raise Exception("Using yield is only supported with AsyncTasks.")
-            except Exception:
+            except Exception as e:
                 genobj_finished = True
                 AsyncTask._out_counter -= 1
-                raise
+                QMessageBox.warning(_get_parent_wnd(), 'Error', str(e))
+                return None
 
         genobj = func(*args, **kwargs)
         if not isinstance(genobj, types.GeneratorType):

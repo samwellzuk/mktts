@@ -1,6 +1,8 @@
+pyyaml
 requests
 Scrapy
 gTTS
 PyQt5
 PyQtWebEngine
+appdirs
 

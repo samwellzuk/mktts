@@ -2,7 +2,26 @@
 # Created by samwell
 
 
-class CambridgeUK(object):
+class Cambridge(object):
+    def __init__(self):
+        pass
+
+    @property
+    def home(self):
+        return 'https://dictionary.cambridge.org/dictionary/'
+
+    def check_url(self, url):
+        """
+        :param url: QUrl
+        :return: bool,queryword
+        """
+        return False, None
+
+    def parse_html(self, dictword, html):
+        return
+
+
+class CambridgeUK(Cambridge):
     @property
     def name(self):
         return 'cambridge_uk'
@@ -16,28 +35,11 @@ class CambridgeUK(object):
         return 'en'
 
     @property
-    def tts_language(self):
+    def default_ttslang(self):
         return 'en-uk'
 
-    @property
-    def home(self):
-        return 'https://dictionary.cambridge.org/dictionary/'
 
-    def check_url(self, url):
-        """
-        :param url: QUrl
-        :return: bool
-        """
-        return True
-
-    def parse_url(self, url):
-        pass
-
-    def parse_html(self, usrl, html):
-        return
-
-
-class CambridgeUS(object):
+class CambridgeUS(Cambridge):
     @property
     def name(self):
         return 'cambridge_us'
@@ -51,22 +53,5 @@ class CambridgeUS(object):
         return 'en'
 
     @property
-    def tts_language(self):
+    def default_ttslang(self):
         return 'en-us'
-
-    @property
-    def home(self):
-        return 'https://dictionary.cambridge.org/dictionary/'
-
-    def check_url(self, url):
-        """
-        :param url: QUrl
-        :return: bool
-        """
-        return True
-
-    def parse_url(self, url):
-        pass
-
-    def parse_html(self, usrl, html):
-        return
