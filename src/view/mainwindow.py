@@ -8,7 +8,7 @@ from PyQt5.QtCore import Qt, QUrl, pyqtSlot
 from PyQt5.QtWidgets import QMainWindow, QSizePolicy, QTabBar, QMessageBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
-from tts import tts_languages
+from tts import tts_languages, trans_tts
 from di.cambridge import CambridgeUK, CambridgeUS
 from model import DictWord
 from settings import data_dir
@@ -177,34 +177,43 @@ class MainWindow(QMainWindow):
 
     @coroutine
     def process(self, diobj, wordobj, html):
-        info = '%s, parse html' % wordobj.query_word
-        self._query_progress(0, info)
-        yield AsyncTask(diobj.parse_html, wordobj, html)
+        try:
+            info = '%s, parse html' % wordobj.query_word
+            self._query_progress(0, info)
+            yield AsyncTask(diobj.parse_html, wordobj, html)
 
-        info = '%s, translate to voice ...' % wordobj.query_word
-        self._query_progress(10, info)
-        total = 0
-        for w in wordobj.words:
-            if not w.title_voices and w.title_text:
-                total += 1
-            if not w.content_voices and w.content_text:
-                total += 1
-        cur = 0
-        for w in wordobj.words:
-            if not w.title_voices and w.title_text:
-                yield AsyncTask(_worker, sinfo)
-                cur += 1
-                progress = 10 + int(90 * cur/total)
-                self._query_progress(progress, info)
-            if not w.content_voices and w.content_text:
-                yield AsyncTask(_worker, sinfo)
-                progress = 10 + int(90 * cur / total)
-                self._query_progress(progress, info)
+            info = '%s, translate to voice ...' % wordobj.query_word
+            self._query_progress(10, info)
+            total = 0
+            for w in wordobj.words:
+                if not w.title_voices and w.title_text:
+                    total += 1
+                if not w.content_voices and w.content_text:
+                    total += 1
+            cur = 0
+            for w in wordobj.words:
+                if not w.title_voices and w.title_text:
+                    fname, fpath = wordobj.mk_voice_fname()
+                    yield AsyncTask(trans_tts, w.title_text, fpath)
+                    w.title_voices.append(fname)
+                    cur += 1
+                    progress = 10 + int(90 * cur / total)
+                    self._query_progress(progress, info)
+                if not w.content_voices and w.content_text:
+                    fname, fpath = wordobj.mk_voice_fname()
+                    yield AsyncTask(trans_tts, w.content_text, fpath)
+                    w.content_voices.append(fname)
+                    progress = 10 + int(90 * cur / total)
+                    self._query_progress(progress, info)
+
+        except (Exception, GeneratorExit):
+            wordobj.clear()
+            raise
 
         info = '%s, finished!' % wordobj.query_word
         self._query_progress(100, info)
 
-        DictWord.dump(wordobj)
+        wordobj.save()
         self.update_word(wordobj)
         self._query_finsh()
         return

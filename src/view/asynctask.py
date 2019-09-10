@@ -255,7 +255,10 @@ def coroutine(func=None, *, is_block=False):
                     obj = next(gen)
                 else:
                     try:
-                        obj = gen.send(data)
+                        if isinstance(data, Exception):
+                            obj = gen.throw(data)
+                        else:
+                            obj = gen.send(data)
                     except StopIteration as e:
                         genobj_finished = True
                         AsyncTask._out_counter -= 1
@@ -266,12 +269,13 @@ def coroutine(func=None, *, is_block=False):
                     obj.finished_callback = partial(_execute, gen)
                     obj.start()
                 else:
+                    gen.close()
                     raise Exception("Using yield is only supported with AsyncTasks.")
             except Exception as e:
                 genobj_finished = True
                 AsyncTask._out_counter -= 1
                 QMessageBox.warning(_get_parent_wnd(), 'Error', str(e))
-                return None
+            return None
 
         genobj = func(*args, **kwargs)
         if not isinstance(genobj, types.GeneratorType):

@@ -32,12 +32,47 @@ class DictWord(object):
 
         self.words = [Word(**wobj) for wobj in kwargs['words']] if 'words' in kwargs and kwargs['words'] else []
 
-    def mk_voice_name(self):
+    def mk_voice_fname(self):
         while True:
             fname = '%06x.mp3' % random.randrange(16 ** 6)
             fpath = os.path.join(self.data_path, fname)
             if not os.path.exists(fpath):
                 return fname, fpath
+
+    def clear(self):
+        pass
+
+    def save(self):
+        dictobj = {
+            'tts_lang': self.tts_lang,
+            'query_word': self.query_word,
+            'words': [
+                {
+                    'name': subobj.name,
+                    'title_text': subobj.title_text,
+                    'title_voices': subobj.title_voices,
+                    'content_text': subobj.content_text,
+                    'content_voices': subobj.content_voices,
+                } for subobj in self.words
+            ]
+        }
+        # clear file which is't be used
+        filepath = os.path.join(self.data_path, 'dictword.yml')
+        with open(filepath, 'w', encoding='utf8') as fp:
+            yaml.dump(dictobj, fp)
+        filelist = ['dictword.yml']
+        for subobj in self.words:
+            filelist.extend(subobj.title_voices)
+            filelist.extend(subobj.content_voices)
+        fileset = set(filelist)
+        for fname in os.listdir(self.data_path):
+            if fname in fileset:
+                continue
+            try:
+                fpath = os.path.join(self.data_path, fname)
+                os.remove(fpath)
+            except:
+                pass
 
     @staticmethod
     def load(data_path):
@@ -48,35 +83,4 @@ class DictWord(object):
             obj = DictWord(**dictword)
             return obj
 
-    @staticmethod
-    def dump(obj):
-        dictobj = {
-            'tts_lang': obj.tts_lang,
-            'query_word': obj.query_word,
-            'words': [
-                {
-                    'name': subobj.name,
-                    'title_text': subobj.title_text,
-                    'title_voices': subobj.title_voices,
-                    'content_text': subobj.content_text,
-                    'content_voices': subobj.content_voices,
-                } for subobj in obj.words
-            ]
-        }
-        # clear file which is't be used
-        filepath = os.path.join(obj.data_path, 'dictword.yml')
-        with open(filepath, 'w', encoding='utf8') as fp:
-            yaml.dump(dictobj, fp)
-        filelist = ['dictword.yml']
-        for subobj in obj.words:
-            filelist.extend(subobj.title_voices)
-            filelist.extend(subobj.content_voices)
-        fileset = set(filelist)
-        for fname in os.listdir(obj.data_path):
-            if fname in fileset:
-                continue
-            try:
-                fpath = os.path.join(obj.data_path, fname)
-                os.remove(fpath)
-            except:
-                pass
+

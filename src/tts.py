@@ -1,6 +1,7 @@
 # -*-coding: utf-8 -*-
 # Created by samwell
 import gtts
+import gtts.lang
 
 """
 af Afrikaans
@@ -84,5 +85,7 @@ cy Welsh
 """
 tts_languages = sorted(gtts.lang.tts_langs().items(), key=lambda d: d[1])
 
-def trans_tts(text,fpath):
-    gtts.gTTS
+
+def trans_tts(text, lang, fpath):
+    ttsobj = gtts.gTTS(text, lang=lang, lang_check=False)
+    ttsobj.save(fpath)
