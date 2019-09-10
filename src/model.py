@@ -3,6 +3,7 @@
 import random
 import os.path
 import yaml
+import shutil
 
 
 class Word(object):
@@ -40,7 +41,8 @@ class DictWord(object):
                 return fname, fpath
 
     def clear(self):
-        pass
+        if os.path.isdir(self.data_path):
+            shutil.rmtree(self.data_path, ignore_errors=True)
 
     def save(self):
         dictobj = {
@@ -82,5 +84,3 @@ class DictWord(object):
             dictword['data_path'] = data_path
             obj = DictWord(**dictword)
             return obj
-
-
