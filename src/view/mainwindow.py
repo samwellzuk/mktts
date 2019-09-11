@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
         self.ui.contentMktts.clicked.connect(self._contentMktts)
         self.ui.contentEdit.textChanged.connect(self._contentTextChanged)
 
-        self.tabBar.currentChanged.connect(self._tarbarChanged)
+        self.ui.tabBar.currentChanged.connect(self._tarbarChanged)
         self.update_dictword(None)
 
     def save_dictword_change(self):
@@ -168,12 +168,16 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def _titleTextChanged(self):
+        if self.curDictWord is None:
+            return
         txt = self.ui.titleEdit.toPlainText()
         self.curWord.title_text = txt
         self.curDictWordChange = True
 
     @pyqtSlot(bool)
     def _titlePlay(self, checked):
+        if self.curDictWord is None:
+            return
         self.stop_voice_play()
         if self.curWord.title_voices:
             mp3list = [os.path.join(self.curDictWord.data_path, fname) for fname in self.curWord.title_voices]
@@ -189,17 +193,23 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def _titleMktts(self, checked):
+        if self.curDictWord is None:
+            return
         self.stop_voice_play()
         self.mk_voice(True)
 
     @pyqtSlot()
     def _contentTextChanged(self):
+        if self.curDictWord is None:
+            return
         txt = self.ui.contentEdit.toPlainText()
         self.curWord.content_text = txt
         self.curDictWordChange = True
 
     @pyqtSlot(bool)
     def _contentPlay(self, checked):
+        if self.curDictWord is None:
+            return
         self.stop_voice_play()
         if self.curWord.content_voices:
             mp3list = [os.path.join(self.curDictWord.data_path, fname) for fname in self.curWord.content_voices]
@@ -215,10 +225,12 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot(bool)
     def _contentMktts(self, checked):
+        if self.curDictWord is None:
+            return
         self.stop_voice_play()
         self.mk_voice(False)
 
-    @pyqtSlot(int)
+    @pyqtSlot(QMediaPlayer.State)
     def _titleStateChanged(self, status):
         if status == QMediaPlayer.PlayingState:
             self.ui.titlePlay.setEnabled(False)
@@ -227,7 +239,7 @@ class MainWindow(QMainWindow):
             self.ui.titlePlay.setEnabled(True)
             self.ui.titleStop.setEnabled(False)
 
-    @pyqtSlot(int)
+    @pyqtSlot(QMediaPlayer.State)
     def _contentStateChanged(self, status):
         if status == QMediaPlayer.PlayingState:
             self.ui.contentPlay.setEnabled(False)
@@ -340,11 +352,13 @@ class MainWindow(QMainWindow):
         self.ui.groupBox_5.setVisible(True)
         try:
             info = '%s, parse html' % dictwordobj.query_word
-            self._query_progress(0, info)
+            self.ui.progressBar.setValue(0)
+            self.ui.progressLabel.setText(info)
             yield AsyncTask(diobj.parse_html, dictwordobj, html)
 
             info = '%s, translate to voice ...' % dictwordobj.query_word
-            self._query_progress(10, info)
+            self.ui.progressBar.setValue(10)
+            self.ui.progressLabel.setText(info)
             total = 0
             for w in dictwordobj.words:
                 if not w.title_voices and w.title_text:
@@ -359,13 +373,15 @@ class MainWindow(QMainWindow):
                     w.title_voices.append(fname)
                     cur += 1
                     progress = 10 + int(90 * cur / total)
-                    self._query_progress(progress, info)
+                    self.ui.progressBar.setValue(progress)
+                    self.ui.progressLabel.setText(info)
                 if not w.content_voices and w.content_text:
                     fname, fpath = dictwordobj.mk_voice_fname()
                     yield AsyncTask(trans_tts, w.content_text, fpath)
                     w.content_voices.append(fname)
                     progress = 10 + int(90 * cur / total)
-                    self._query_progress(progress, info)
+                    self.ui.progressBar.setValue(progress)
+                    self.ui.progressLabel.setText(info)
 
         except (Exception, GeneratorExit):
             dictwordobj.clear()
@@ -373,7 +389,8 @@ class MainWindow(QMainWindow):
             raise
 
         info = '%s, finished!' % dictwordobj.query_word
-        self._query_progress(100, info)
+        self.ui.progressBar.setValue(100)
+        self.ui.progressLabel.setText(info)
 
         dictwordobj.save()
         self.ui.groupBox_5.setVisible(False)

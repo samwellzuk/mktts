@@ -22,6 +22,10 @@ class DictWord(object):
             self.data_path = kwargs['data_path']
         else:
             raise RuntimeError('Missing field: data_path')
+        if 'dictionary' in kwargs:
+            self.dictionary = kwargs['dictionary']
+        else:
+            raise RuntimeError('Missing field: dictionary')
         if 'tts_lang' in kwargs:
             self.tts_lang = kwargs['tts_lang']
         else:
@@ -46,6 +50,7 @@ class DictWord(object):
 
     def save(self):
         dictobj = {
+            'dictionary': self.dictionary,
             'tts_lang': self.tts_lang,
             'query_word': self.query_word,
             'words': [
