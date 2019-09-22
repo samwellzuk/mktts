@@ -50,6 +50,8 @@ class Cambridge(object):
     def parse_html(self, dictword, html):
         sel = Selector(text=html)
         dilist = sel.xpath('//div[@data-id="cald4"]//div[contains(@class,"entry-body__el")]')
+        if not dilist:
+            return False
         for di in dilist:
             dihead = di.xpath('div[contains(@class,"dpos-h")]')
             # 词
@@ -59,7 +61,7 @@ class Cambridge(object):
             # 可数性
             gram = ''.join(dihead.xpath('.//span[contains(@class,"dgram")]/descendant-or-self::text()').getall())
             # 发音
-            upath = dihead.xpath(
+            mp3path = dihead.xpath(
                 './/span[contains(@class,"%s")]//source[@type="audio/mpeg"]/@src' %
                 self.langkey).get()
             # 音标
@@ -67,8 +69,10 @@ class Cambridge(object):
                 './/span[contains(@class,"%s")]//span[contains(@class,"dipa")]/descendant-or-self::text()' %
                 self.langkey).getall())
 
-            mp3 = urljoin(self.home, upath)
-        return
+            mp3 = urljoin(self.home, mp3path)
+
+            dihead = di.xpath('div[contains(@class,"dpos-h")]')
+        return True
 
 
 class CambridgeUK(Cambridge):

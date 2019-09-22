@@ -1,6 +1,7 @@
 # -*-coding: utf-8 -*-
 # Created by samwell
 import os
+import time
 from functools import partial
 
 from PyQt5.QtCore import Qt, QUrl, pyqtSlot
@@ -354,7 +355,15 @@ class MainWindow(QMainWindow):
             info = '%s, parse html' % dictwordobj.query_word
             self.ui.progressBar.setValue(0)
             self.ui.progressLabel.setText(info)
-            yield AsyncTask(diobj.parse_html, dictwordobj, html)
+            bok = yield AsyncTask(diobj.parse_html, dictwordobj, html)
+            if not bok:
+                dictwordobj.clear()
+                info = '%s, parse failed!' % dictwordobj.query_word
+                self.ui.progressBar.setValue(100)
+                self.ui.progressLabel.setText(info)
+                yield AsyncTask(time.sleep, 3)
+                self.ui.groupBox_5.setVisible(False)
+                return
 
             info = '%s, translate to voice ...' % dictwordobj.query_word
             self.ui.progressBar.setValue(10)
