@@ -55,7 +55,7 @@ class Cambridge(object):
             id = cid.xpath('@id').get()
             if id.startswith('cald4-'):
                 ciddict[id] = cid.xpath('..')
-        
+
         if not dilist:
             return False
         for di in dilist:
