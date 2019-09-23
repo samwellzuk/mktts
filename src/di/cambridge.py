@@ -49,7 +49,13 @@ class Cambridge(object):
 
     def parse_html(self, dictword, html):
         sel = Selector(text=html)
-        dilist = sel.xpath('//div[@data-id="cald4"]//div[contains(@class,"entry-body__el")]')
+        ciddict = {}
+        cidlist = sel.xpath('//div[@data-id="cald4"]//div[@class="cid"]')
+        for cid in cidlist:
+            id = cid.xpath('@id').get()
+            if id.startswith('cald4-'):
+                ciddict[id] = cid.xpath('..')
+        
         if not dilist:
             return False
         for di in dilist:
